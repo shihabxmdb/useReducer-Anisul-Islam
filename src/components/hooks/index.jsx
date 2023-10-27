@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import { useState } from "react";
+import { useState, useReducer } from "react";
 const booksData = [
   { id: 1, name: "shihab" },
   { id: 2, name: "Hasan" },
@@ -9,22 +9,57 @@ const booksData = [
 const Modal = ({ modalText }) => {
   return <p>{modalText}</p>;
 };
+
+const reducer = (state, action) => {
+  // action.type , action.payload are come from dispatch
+  //state is the current state which is come from dispatch automatically
+  if (action.type == "ADD") {
+    const allbooks = [...state.books, action.payload];
+    return {
+      ...state,
+      books: allbooks,
+      isModalOpen: true,
+      modalText: "book is added",
+    };
+  }
+  if (action.type == "REMOVE") {
+    const allbooks = state.books.filter((book) => book.id != action.payload);
+
+    return {
+      ...state,
+      books: allbooks,
+      isModalOpen: true,
+      modalText: "Item removed",
+    };
+  }
+  return state;
+};
 const UseReducer = () => {
-  const [books, setBooks] = useState(booksData);
+  /*const [books, setBooks] = useState(booksData);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalText, setModalText] = useState("");
+  */
+  const [bookState, dispatch] = useReducer(reducer, {
+    books: booksData,
+    isModalOpen: false,
+    modalText: "",
+  });
+
   const [bookName, setBookName] = useState("");
 
+  //handle form submit
   const handleSubmit = (e) => {
     e.preventDefault();
+    const newBook = { id: new Date().getTime().toString(), name: bookName };
 
-    setBooks((prev) => {
-      const NewBook = { id: new Date().getTime().toString(), name: bookName };
-      return [...prev, NewBook];
-    });
-    setIsModalOpen(true);
-    setModalText("Book is added");
+    dispatch({ type: "ADD", payload: newBook });
+    setBookName("");
   };
+  //handle remove
+  const removeBook = (id) => {
+    dispatch({ type: "REMOVE", payload: id });
+  };
+
   return (
     <div>
       <h1>Books List :</h1>
@@ -36,10 +71,25 @@ const UseReducer = () => {
         />
         <button type="submit">Add Book</button>
       </form>
-      {isModalOpen && <Modal modalText={modalText} />}
-      {books.map((book) => {
+      {bookState.isModalOpen && <Modal modalText={bookState.modalText} />}
+
+      {bookState.books.map((book) => {
         const { id, name } = book;
-        return <li key={id}>{name}</li>;
+        return (
+          <>
+            <li key={id}>
+              {name}{" "}
+              <button
+                onClick={() => {
+                  removeBook(id);
+                }}
+              >
+                Remove
+              </button>
+            </li>
+            <br />
+          </>
+        );
       })}
     </div>
   );
